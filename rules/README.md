@@ -5,6 +5,6 @@ This directory holds various rules implemented for each IDE to guide them to per
 ## Overview
 
 The rules in this directory enable IDEs to:
-- Detect security issues using ggshield
+- Detect security issues using ggshield and.or MCP scan tool
 - Access contextual remediation data from your GitGuardian workspace via MCP tools
 - Guide developers through the remediation process
