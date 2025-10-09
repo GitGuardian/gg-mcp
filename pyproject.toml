@@ -84,3 +84,8 @@ gpg_sign = true
 version_files = [
     "pyproject.toml:version",
 ]
+
+[dependency-groups]
+dev = [
+    "twine>=6.2.0",
+]
