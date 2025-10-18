@@ -29,14 +29,10 @@ class IncidentSeverity(str, Enum):
 
 class IncidentStatus(str, Enum):
     """Enum for incident statuses."""
-
-    VALID = "valid"
-    INVALID = "invalid"
-    IGNORED = "IGNORED"
-    FIXED = "fixed"
-    TRIGGERED = "TRIGGERED"
-    ASSIGNED = "ASSIGNED"
-    RESOLVED = "RESOLVED"
+    IGNORED = "IGNORED", "Ignored"
+    TRIGGERED = "TRIGGERED", "Triggered"
+    ASSIGNED = "ASSIGNED", "Assigned"
+    RESOLVED = "RESOLVED", "Resolved"
 
 
 class IncidentValidity(str, Enum):
@@ -1286,10 +1282,14 @@ class GitGuardianClient:
         source_id: str | None = None,
         presence: str | None = None,
         tags: list[str] | None = None,
+        exclude_tags: list[str] | None = None,
         per_page: int = 20,
         cursor: str | None = None,
         ordering: str | None = None,
         get_all: bool = False,
+        severity: list[str] | None = None,
+        validity: list[str] | None = None,
+        status: list[str] | None = None,
     ) -> dict[str, Any] | list[dict[str, Any]]:
         """List secret occurrences with optional filtering and cursor-based pagination.
 
@@ -1300,11 +1300,15 @@ class GitGuardianClient:
             source_type: Filter by source type
             source_id: Filter by specific source ID
             presence: Filter by presence status
-            tags: Filter by tags (list of tag IDs)
+            tags: Filter by tags (list of tag names)
+            exclude_tags: Exclude occurrences with these tag names
             per_page: Number of results per page (default: 20)
             cursor: Pagination cursor (for cursor-based pagination)
             ordering: Sort field (e.g., 'date', '-date' for descending)
             get_all: If True, fetch all results using cursor-based pagination
+            severity: Filter by severity (list of severity names)
+            validity: Filter by validity (list of validity names)
+            status: Filter by status (list of status names)
 
         Returns:
             List of occurrences matching the criteria or an empty dict/list if no results
@@ -1327,12 +1331,20 @@ class GitGuardianClient:
             params["presence"] = presence
         if tags:
             params["tags"] = ",".join(tags)
+        if exclude_tags:
+            params["exclude_tags"] = ",".join(exclude_tags) if isinstance(exclude_tags, list) else exclude_tags
         if per_page:
             params["per_page"] = per_page
         if cursor:
             params["cursor"] = cursor
         if ordering:
             params["ordering"] = ordering
+        if severity:
+            params["severity"] = ",".join(severity)
+        if validity:
+            params["validity"] = ",".join(validity)
+        if status:
+            params["status"] = ",".join(status)
 
         # If get_all is True, use paginate_all to get all results
         if get_all:
@@ -1514,6 +1526,7 @@ class GitGuardianClient:
         to_date: str | None = None,
         presence: str | None = None,
         tags: list[str] | None = None,
+        exclude_tags: list[str] | None = None,
         per_page: int = 20,
         cursor: str | None = None,
         ordering: str | None = None,
@@ -1531,6 +1544,7 @@ class GitGuardianClient:
             to_date: Filter incidents created before this date (ISO format)
             presence: Filter by presence status
             tags: Filter by tags
+            exclude_tags: Exclude incidents with these tag names
             per_page: Number of results per page
             cursor: Pagination cursor
             ordering: Sort field
@@ -1565,6 +1579,8 @@ class GitGuardianClient:
             params["presence"] = presence
         if tags:
             params["tags"] = ",".join(tags) if isinstance(tags, list) else tags
+        if exclude_tags:
+            params["exclude_tags"] = ",".join(exclude_tags) if isinstance(exclude_tags, list) else exclude_tags
         if per_page:
             params["per_page"] = per_page
         if cursor:

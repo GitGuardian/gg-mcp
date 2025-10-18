@@ -8,6 +8,11 @@ from gg_api_core.utils import get_client
 logger = logging.getLogger(__name__)
 
 
+DEFAULT_EXCLUDED_TAGS = ["TEST_FILE", "FALSE_POSITIVE", "CHECK_RUN_SKIP_FALSE_POSITIVE", "CHECK_RUN_SKIP_LOW_RISK", "CHECK_RUN_SKIP_TEST_CRED"]
+DEFAULT_STATUSES = ["TRIGGERED", "ASSIGNED", "RESOLVED"]  # We exclude "IGNORED" ones
+DEFAULT_VALIDITIES = ["valid", "failed_to_check", "no_checker", "unknown"]  # We exclude "invalid" ones
+
+
 async def list_repo_occurrences(
     repository_name: str | None = Field(
         default=None,
@@ -24,11 +29,18 @@ async def list_repo_occurrences(
         default=None, description="Filter occurrences created before this date (ISO format: YYYY-MM-DD)"
     ),
     presence: str | None = Field(default=None, description="Filter by presence status"),
-    tags: list[str] | None = Field(default=None, description="Filter by tags (list of tag IDs)"),
+    tags: list[str] | None = Field(default=None, description="Filter by tags (list of tag names)"),
+    exclude_tags: list[str] | None = Field(
+        default=DEFAULT_EXCLUDED_TAGS,
+        description="Exclude occurrences with these tag names. Pass empty list to disable filtering."
+    ),
     ordering: str | None = Field(default=None, description="Sort field (e.g., 'date', '-date' for descending)"),
     per_page: int = Field(default=20, description="Number of results per page (default: 20, min: 1, max: 100)"),
     cursor: str | None = Field(default=None, description="Pagination cursor for fetching next page of results"),
     get_all: bool = Field(default=False, description="If True, fetch all results using cursor-based pagination"),
+    status: list[str] | None = Field(default=None, description="Filter by status (list of status names)"),
+    severity: list[str] | None = Field(default=None, description="Filter by severity (list of severity names)"),
+    validity: list[str] | None = Field(default=None, description="Filter by validity (list of validity names)"),
 ) -> dict[str, Any]:
     """
     List secret occurrences for a specific repository using the GitGuardian v1/occurrences/secrets API.
@@ -48,17 +60,23 @@ async def list_repo_occurrences(
 
     Use list_repo_incidents for a higher-level view of incidents grouped by secret type.
 
+    By default, occurrences tagged with TEST_FILE or FALSE_POSITIVE are excluded. Pass exclude_tags=[] to disable this filtering.
+
     Args:
         repository_name: The full repository name (e.g., 'GitGuardian/gg-mcp')
         source_id: The GitGuardian source ID (alternative to repository_name)
         from_date: Filter occurrences created after this date (ISO format: YYYY-MM-DD)
         to_date: Filter occurrences created before this date (ISO format: YYYY-MM-DD)
         presence: Filter by presence status
-        tags: Filter by tags (list of tag IDs)
+        tags: Filter by tags (list of tag names)
+        exclude_tags: Exclude occurrences with these tag names (default: TEST_FILE, FALSE_POSITIVE)
         ordering: Sort field (e.g., 'date', '-date' for descending)
         per_page: Number of results per page (default: 20, min: 1, max: 100)
         cursor: Pagination cursor for fetching next page of results
         get_all: If True, fetch all results using cursor-based pagination
+        status: Filter by status (list of status names)
+        severity: Filter by severity (list of severity names)
+        validity: Filter by validity (list of validity names)
 
     Returns:
         List of secret occurrences with detailed match information including file locations and indices
@@ -81,10 +99,14 @@ async def list_repo_occurrences(
                 to_date=to_date,
                 presence=presence,
                 tags=tags,
+                exclude_tags=exclude_tags,
                 per_page=per_page,
                 cursor=cursor,
                 ordering=ordering,
                 get_all=get_all,
+                status=status,
+                severity=severity,
+                validity=validity,
             )
         else:
             # Use source_name (legacy path)
@@ -96,10 +118,14 @@ async def list_repo_occurrences(
                 to_date=to_date,
                 presence=presence,
                 tags=tags,
+                exclude_tags=exclude_tags,
                 per_page=per_page,
                 cursor=cursor,
                 ordering=ordering,
                 get_all=get_all,
+                status=status,
+                severity=severity,
+                validity=validity,
             )
 
         # Handle the response format
